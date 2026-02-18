@@ -1,40 +1,39 @@
+
+// server.js
+const express = require("express");
+const http = require("http");
 const WebSocket = require("ws");
 
-const PORT = process.env.PORT || 3000;
-const wss = new WebSocket.Server({ port: PORT });
+const app = express();
+const server = http.createServer(app);
 
-const clients = new Map();
-const allowedUsers = ["juan", "carlos"];
+const wss = new WebSocket.Server({ server });
+
+const PORT = process.env.PORT || 3000;
+
+app.get("/", (req, res) => {
+  res.send("Servidor WebSocket activo");
+});
 
 wss.on("connection", (ws) => {
+  console.log("Cliente conectado");
 
   ws.on("message", (message) => {
-    const data = JSON.parse(message);
+    console.log("Mensaje recibido:", message.toString());
 
-    if (data.type === "register") {
-      if (!allowedUsers.includes(data.userId)) {
-        ws.send(JSON.stringify({ type: "error", message: "No autorizado" }));
-        ws.close();
-        return;
+    // Reenviar a todos los clientes
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
       }
-
-      clients.set(data.userId, ws);
-      ws.userId = data.userId;
-      console.log(data.userId + " conectado");
-    }
-
-    if (data.target && clients.has(data.target)) {
-      clients.get(data.target).send(JSON.stringify(data));
-    }
+    });
   });
 
   ws.on("close", () => {
-    if (ws.userId) {
-      clients.delete(ws.userId);
-      console.log(ws.userId + " desconectado");
-    }
+    console.log("Cliente desconectado");
   });
-
 });
 
-console.log("Servidor iniciado en puerto " + PORT);
+server.listen(PORT, () => {
+  console.log("Servidor iniciado en puerto", PORT);
+});
