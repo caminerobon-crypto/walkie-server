@@ -9,7 +9,12 @@ const server = http.createServer(app);
 
 const wss = new WebSocket.Server({ server });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
+
+server.listen(PORT, () => {
+  console.log("Servidor iniciado en puerto " + PORT);
+});
+
 
 app.get("/", (req, res) => {
   res.send("Servidor WebSocket activo");
@@ -37,3 +42,4 @@ wss.on("connection", (ws) => {
 server.listen(PORT, () => {
   console.log("Servidor iniciado en puerto", PORT);
 });
+
